@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客戶通訊錄 — 正航醫療</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f6f3;--surface:#ffffff;--surface2:#f2f0ec;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);--text:#1a1a18;--text2:#5c5c58;--text3:#9a9994;--navy:#1B3A6B;--blue:#2563A8;--lblue:#D6E8FA;--green:#166534;--lgreen:#DCFCE7;--radius:12px;--radius-sm:8px}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--surface:#26261f;--surface2:#2e2e26;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);--text:#e8e6de;--text2:#a8a69e;--text3:#6a6860;--lblue:#0c2744;--lgreen:#1a3008}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC','Arial',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+/* HEADER */
+.header{background:var(--navy);padding:0 20px;position:sticky;top:0;z-index:100}
+.header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px;height:56px;flex-wrap:wrap}
+.logo{font-size:15px;font-weight:500;color:#fff;white-space:nowrap}
+.logo span{opacity:.6;font-weight:400;font-size:13px;margin-left:6px}
+.search-wrap{position:relative;flex:1;min-width:160px;max-width:320px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);stroke:#fff;opacity:.5;fill:none;stroke-width:2;stroke-linecap:round}
+.search-wrap input{width:100%;padding:7px 12px 7px 32px;border:none;border-radius:var(--radius-sm);background:rgba(255,255,255,0.12);color:#fff;font-size:13px;font-family:inherit;outline:none}
+.search-wrap input::placeholder{color:rgba(255,255,255,0.4)}
+.search-wrap input:focus{background:rgba(255,255,255,0.2)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters select{padding:6px 8px;border:none;border-radius:var(--radius-sm);background:rgba(255,255,255,0.12);color:#fff;font-size:12px;font-family:inherit;cursor:pointer;outline:none}
+.filters select option{background:var(--navy);color:#fff}
+.reload-btn{margin-left:auto;padding:6px 12px;border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius-sm);background:transparent;color:rgba(255,255,255,0.7);font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap}
+.reload-btn:hover{background:rgba(255,255,255,0.1)}
+/* STATS */
+.stats-bar{max-width:1200px;margin:18px auto 0;padding:0 20px;display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;flex:1;min-width:110px}
+.stat-num{font-size:22px;font-weight:500}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:2px}
+/* GRID */
+.grid-wrap{max-width:1200px;margin:18px auto 40px;padding:0 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .15s,transform .12s}
+.card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.card-top{padding:18px 14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;border-bottom:0.5px solid var(--border)}
+.avatar{width:68px;height:68px;border-radius:50%;margin-bottom:10px;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:500;overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.c-name{font-size:13px;font-weight:500;margin-bottom:3px;line-height:1.3}
+.c-org{font-size:11px;color:var(--text2);margin-bottom:7px;line-height:1.4}
+.badge{font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500}
+.card-body{padding:10px 12px}
+.meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-bottom:5px}
+.meta svg{flex-shrink:0;stroke:var(--text3);fill:none;stroke-width:1.8;stroke-linecap:round}
+.chips{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 10px}
+.chip{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--surface2);border:0.5px solid var(--border);color:var(--text2)}
+/* PANEL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.panel{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100vw;background:var(--surface);z-index:201;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+.panel.open{transform:translateX(0)}
+.panel-header{padding:18px 20px;border-bottom:0.5px solid var(--border);display:flex;gap:14px;align-items:flex-start;position:sticky;top:0;background:var(--surface);z-index:1}
+.panel-avatar{width:76px;height:76px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:500;overflow:hidden}
+.panel-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.panel-title{font-size:16px;font-weight:500;margin-bottom:3px}
+.panel-sub{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:7px}
+.close-btn{margin-left:auto;padding:6px;border:none;background:transparent;cursor:pointer;color:var(--text3);flex-shrink:0;font-size:20px;line-height:1}
+.panel-body{padding:18px 20px;flex:1}
+.sec-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:5px;border-bottom:0.5px solid var(--border);margin-top:16px}
+.sec-title:first-child{margin-top:0}
+.info-row{display:flex;gap:9px;font-size:13px;color:var(--text2);margin-bottom:8px;align-items:flex-start}
+.info-row svg{flex-shrink:0;margin-top:1px;stroke:var(--text3);fill:none;stroke-width:1.8;stroke-linecap:round}
+.info-val{color:var(--text)}
+.chips-lg{display:flex;flex-wrap:wrap;gap:6px}
+.chip-lg{font-size:12px;padding:4px 10px;border-radius:100px;border:0.5px solid var(--border2);color:var(--text2)}
+.photo-hint{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;font-size:12px;color:var(--text3);text-align:center;line-height:1.6;margin-top:4px}
+/* LOADING / ERROR */
+.loading{text-align:center;padding:60px;color:var(--text3);font-size:15px;grid-column:1/-1}
+.error-bar{background:#FCEBEB;color:#A32D2D;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.no-results{text-align:center;padding:60px;color:var(--text3);font-size:14px;grid-column:1/-1}
+@media(max-width:600px){.header-inner{height:auto;padding:10px 0;flex-wrap:wrap;gap:8px}.panel{width:100vw}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">正航醫療 <span>客戶通訊錄</span></div>
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="搜尋名稱、院所、業務員、編號…">
+    </div>
+    <div class="filters">
+      <select id="countryFilter"><option value="">所有國家</option></select>
+      <select id="salesFilter"><option value="">所有業務</option></select>
+      <select id="seminarFilter">
+        <option value="">所有研討會</option>
+        <option value="AiSVO">🔵 AiSVO</option>
+        <option value="PAHA">🟡 PAHA</option>
+        <option value="外國人實作">🟢 外國人實作</option>
+      </select>
+      <select id="contactFilter">
+        <option value="">所有聯繫方式</option>
+        <option value="Line">Line</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Kakao">Kakao</option>
+        <option value="FB">FB</option>
+        <option value="WeChat">WeChat</option>
+      </select>
+    </div>
+    <button class="reload-btn" onclick="loadData()">↻ 重新載入</button>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num" id="s-total">—</div><div class="stat-lbl">客戶總數</div></div>
+  <div class="stat"><div class="stat-num" id="s-photo" style="color:var(--text3)">—</div><div class="stat-lbl">已上傳照片</div></div>
+  <div class="stat"><div class="stat-num" id="s-aisvo">—</div><div class="stat-lbl">🔵 AiSVO 參與</div></div>
+  <div class="stat"><div class="stat-num" id="s-purchase">—</div><div class="stat-lbl">有採購紀錄</div></div>
+</div>
+
+<div class="grid-wrap">
+  <div id="errorBar" class="error-bar"></div>
+  <div class="grid" id="grid"><div class="loading">載入中…</div></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-header">
+    <div class="panel-avatar" id="pAv"></div>
+    <div style="flex:1;min-width:0">
+      <div class="panel-title" id="pName"></div>
+      <div class="panel-sub" id="pSub"></div>
+      <div id="pBadge"></div>
+    </div>
+    <button class="close-btn" onclick="closePanel()" aria-label="關閉">✕</button>
+  </div>
+  <div class="panel-body" id="pBody"></div>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/129ha3p079NjmWSpz2n56TC1gX_ay1vjXoOVCpSkWgxU/gviz/tq?tqx=out:csv&sheet=%E5%B7%A5%E4%BD%9C%E8%A1%A81';
+
+const PAL=[["#E6F1FB","#0C447C"],["#EAF3DE","#27500A"],["#FAEEDA","#633806"],["#EEEDFE","#3C3489"],["#FAECE7","#712B13"],["#E1F5EE","#085041"],["#FCEBEB","#791F1F"],["#F1EFE8","#444441"]];
+let allData=[];
+
+function pal(id){const n=parseInt((id||'').replace(/\D/g,''))||0;return PAL[n%PAL.length]}
+function ini(name){return(name||'').replace(/^Dr\.?\s*/i,'').trim().slice(0,2).toUpperCase()||'?'}
+
+// Google Drive 照片連結轉換
+function convertPhotoUrl(url){
+  if(!url||!url.trim())return'';
+  const m=(url||'').match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(m)return`https://drive.google.com/thumbnail?id=${m[1]}&sz=w200`;
+  return url;
+}
+
+// CSV 解析
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  if(lines.length<2)return[];
+  const headers=parseRow(lines[0]);
+  return lines.slice(1).map(line=>{
+    const vals=parseRow(line);
+    const obj={};
+    headers.forEach((h,i)=>obj[h.trim()]=(vals[i]||'').trim());
+    return obj;
+  }).filter(r=>r['客戶名稱']&&r['客戶名稱'].trim());
+}
+function parseRow(line){
+  const res=[];let cur='';let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++}else inQ=!inQ}
+    else if(ch===','&&!inQ){res.push(cur);cur=''}
+    else cur+=ch;
+  }
+  res.push(cur);return res;
+}
+
+function mapRow(r){
+  const g=(...keys)=>{for(const k of keys)if(r[k]!==undefined&&r[k].trim())return r[k].trim();return''};
+  return{
+    updateDate: g('更新日期'),
+    id:         g('客戶編號'),
+    country:    g('國家'),
+    name:       g('客戶名稱'),
+    org:        g('院所'),
+    contact:    g('聯繫'),
+    sales:      g('業務員'),
+    purchased:  g('紀錄（購入／詢問）','紀錄'),
+    amount:     g('累積金額'),
+    seminar:    g('研討會參與'),
+    note:       g('其他備註'),
+    photo:      convertPhotoUrl(g('照片連結')),
+  };
+}
+
+async function loadData(){
+  document.getElementById('grid').innerHTML='<div class="loading">正在讀取試算表…</div>';
+  hideError();
+  try{
+    const res=await fetch(CSV_URL);
+    if(!res.ok)throw new Error('無法讀取試算表，請確認已設定共用權限');
+    const text=await res.text();
+    const rows=parseCSV(text);
+    allData=rows.map(mapRow).filter(r=>r.name);
+    if(!allData.length)throw new Error('試算表無資料，請確認共用設定是否正確');
+    buildFilters();
+    filter();
+  }catch(e){
+    showError(e.message);
+    document.getElementById('grid').innerHTML='<div class="no-results">無法載入資料，請確認試算表共用設定</div>';
+  }
+}
+
+function buildFilters(){
+  const countries=[...new Set(allData.map(d=>d.country).filter(Boolean))].sort();
+  const cf=document.getElementById('countryFilter');
+  const cv=cf.value;
+  cf.innerHTML='<option value="">所有國家</option>'+countries.map(c=>`<option>${c}</option>`).join('');
+  cf.value=cv;
+  const salesList=[...new Set(allData.map(d=>d.sales).filter(Boolean))].sort();
+  const sf=document.getElementById('salesFilter');
+  const sv=sf.value;
+  sf.innerHTML='<option value="">所有業務</option>'+salesList.map(s=>`<option>${s}</option>`).join('');
+  sf.value=sv;
+}
+
+function filter(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const co=document.getElementById('countryFilter').value;
+  const sa=document.getElementById('salesFilter').value;
+  const se=document.getElementById('seminarFilter').value;
+  const ct=document.getElementById('contactFilter').value;
+  const list=allData.filter(c=>{
+    if(q&&!`${c.name}${c.org}${c.id}${c.sales}${c.note}`.toLowerCase().includes(q))return false;
+    if(co&&c.country!==co)return false;
+    if(sa&&c.sales!==sa)return false;
+    if(se&&!(c.seminar||'').includes(se))return false;
+    if(ct&&!(c.contact||'').includes(ct))return false;
+    return true;
+  });
+  updateStats(list);
+  renderGrid(list);
+}
+
+function updateStats(list){
+  document.getElementById('s-total').textContent=list.length;
+  document.getElementById('s-photo').textContent=list.filter(c=>c.photo).length;
+  document.getElementById('s-aisvo').textContent=list.filter(c=>(c.seminar||'').includes('AiSVO')).length;
+  document.getElementById('s-purchase').textContent=list.filter(c=>c.purchased||c.amount).length;
+}
+
+function renderGrid(list){
+  const grid=document.getElementById('grid');
+  if(!list.length){grid.innerHTML='<div class="no-results">找不到符合條件的客戶</div>';return}
+  grid.innerHTML=list.map(c=>cardHTML(c)).join('');
+  grid.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>openPanel(el.dataset.id)));
+}
+
+function cardHTML(c){
+  const[bg,fg]=pal(c.id||c.name);
+  const avHTML=c.photo
+    ?`<div class="avatar"><img src="${c.photo}" alt="${c.name}" onerror="this.parentElement.style.background='${bg}';this.parentElement.style.color='${fg}';this.parentElement.textContent='${ini(c.name)}'"></div>`
+    :`<div class="avatar" style="background:${bg};color:${fg}">${ini(c.name)}</div>`;
+  const semTags=(c.seminar||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="chip">${s}</span>`).join('');
+  const amtNum=parseInt((c.amount||'').replace(/[^\d]/g,''))||0;
+  const amtColor=amtNum>=200000?'#166534':amtNum>=50000?'#185FA5':'var(--text2)';
+  return`<div class="card" data-id="${c.id||c.name}">
+    <div class="card-top">
+      ${avHTML}
+      <div class="c-name">${c.name}</div>
+      ${c.org?`<div class="c-org">${c.org.replace(/[()]/g,'')}</div>`:''}
+      <span class="badge" style="background:${bg};color:${fg}">${c.country||'—'}</span>
+    </div>
+    <div class="card-body">
+      ${c.sales?`<div class="meta"><svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>${c.sales}</div>`:''}
+      ${c.contact?`<div class="meta"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.7A2 2 0 012.18 2H5.18a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.29 6.29l1.27-.54a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>${c.contact}</div>`:''}
+      ${c.amount?`<div class="meta"><svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><span style="color:${amtColor};font-weight:500">${c.amount}</span></div>`:''}
+    </div>
+    ${semTags?`<div class="chips">${semTags}</div>`:''}
+  </div>`;
+}
+
+function openPanel(id){
+  const c=allData.find(x=>(x.id||x.name)===id);
+  if(!c)return;
+  const[bg,fg]=pal(c.id||c.name);
+  const av=document.getElementById('pAv');
+  av.style.background=bg;av.style.color=fg;
+  if(c.photo){av.innerHTML=`<img src="${c.photo}" alt="${c.name}" onerror="this.parentElement.textContent='${ini(c.name)}'">"`}
+  else{av.textContent=ini(c.name)}
+  document.getElementById('pName').textContent=`${c.name}${c.id?' ('+c.id+')':''}`;
+  document.getElementById('pSub').textContent=[c.org?c.org.replace(/[()]/g,''):'',c.country].filter(Boolean).join(' · ');
+  document.getElementById('pBadge').innerHTML=c.sales?`<span class="badge" style="background:${bg};color:${fg}">${c.sales}</span>`:'';
+
+  const ico=path=>`<svg width="14" height="14" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;stroke:var(--text3);fill:none;stroke-width:1.8;stroke-linecap:round">${path}</svg>`;
+  const row=(label,val,svgPath)=>val?`<div class="info-row">${ico(svgPath)}<span>${label?`<span style="color:var(--text3)">${label}：</span>`:''}<span class="info-val">${val}</span></span></div>`:'';
+
+  const semChips=(c.seminar||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="chip-lg">${s}</span>`).join('')||'<span style="color:var(--text3);font-size:13px">尚無紀錄</span>';
+  const amtNum=parseInt((c.amount||'').replace(/[^\d]/g,''))||0;
+  const amtColor=amtNum>=200000?'#166534':amtNum>=50000?'#185FA5':'var(--text)';
+
+  document.getElementById('pBody').innerHTML=`
+    <div class="sec-title">聯繫資訊</div>
+    ${row('聯繫方式',c.contact,'<path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.7A2 2 0 012.18 2H5.18a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.29 6.29l1.27-.54a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>')}
+    ${row('負責業務',c.sales,'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>')}
+    ${row('更新日期',c.updateDate,'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>')}
+    <div class="sec-title">採購紀錄</div>
+    ${c.purchased
+      ?row('品項',c.purchased.replace(/\\\|/g,' | ').replace(/\|/g,' | '),'<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>')
+      :'<div style="font-size:13px;color:var(--text3);margin-bottom:8px">尚無採購紀錄</div>'}
+    ${c.amount?`<div class="info-row">${ico('<circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>')}<span style="color:var(--text3)">累積金額：</span><span style="color:${amtColor};font-weight:500;font-size:14px">${c.amount}</span></div>`:''}
+    <div class="sec-title">研討會參與</div>
+    <div class="chips-lg">${semChips}</div>
+    ${c.note?`<div class="sec-title">備註</div>${row('',c.note,'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>')}`:''}
+    <div class="sec-title">客戶照片</div>
+    ${c.photo
+      ?`<img src="${c.photo}" style="width:100%;border-radius:var(--radius);margin-top:4px;max-height:300px;object-fit:cover" onerror="this.replaceWith(document.createTextNode('照片載入失敗'))">`
+      :'<div class="photo-hint">尚未上傳照片<br>在試算表「照片連結」欄貼上 Google Drive 連結即可</div>'}
+  `;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+function showError(msg){const e=document.getElementById('errorBar');e.textContent=msg;e.style.display='block'}
+function hideError(){document.getElementById('errorBar').style.display='none'}
+
+document.getElementById('searchInput').addEventListener('input',filter);
+document.getElementById('countryFilter').addEventListener('change',filter);
+document.getElementById('salesFilter').addEventListener('change',filter);
+document.getElementById('seminarFilter').addEventListener('change',filter);
+document.getElementById('contactFilter').addEventListener('change',filter);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel()});
+
+loadData();
+</script>
+</body>
+</html>
